@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	dgctx "github.com/darwinOrg/go-common/context"
+	"github.com/darwinOrg/go-common/utils"
 	dghttp "github.com/darwinOrg/go-httpclient"
 	dglogger "github.com/darwinOrg/go-logger"
 	"github.com/darwinOrg/go-web/wrapper"
@@ -13,6 +14,7 @@ import (
 	"os"
 	"path/filepath"
 	"reflect"
+	"strconv"
 	"strings"
 )
 
@@ -51,9 +53,13 @@ type apifoxImportDataBody struct {
 	ImportBasePath      bool                `json:"importBasePath"`
 }
 
-type apifoxCreateDirBody struct {
-	Name     string `json:"name"`
-	ParentId string `json:"parentId"`
+type apifoxResult[T any] struct {
+	Success bool `json:"success"`
+	Data    T    `json:"data"`
+}
+
+type apifoxCreateDirData struct {
+	Id int64 `json:"id"`
 }
 
 type ApiOverwriteMode string
@@ -265,7 +271,7 @@ func createSchemaForType(tpe reflect.Type) *spec.Schema {
 			}
 
 			property := createSchemaForType(field.Type)
-			property.Title = extractNameFromField(field)
+			property.Title = extractTitleFromField(field)
 			property.Description = extractDescriptionFromField(field)
 			fieldName := extractNameFromField(field)
 			schema.Properties[fieldName] = *property
@@ -306,6 +312,15 @@ func extractNameFromField(field reflect.StructField) string {
 		}
 
 		return strings.ToLower(field.Name[0:1]) + field.Name[1:]
+	}
+}
+
+func extractTitleFromField(field reflect.StructField) string {
+	title := field.Tag.Get("title")
+	if title != "" {
+		return title
+	} else {
+		return extractDescriptionFromField(field)
 	}
 }
 
@@ -356,7 +371,7 @@ func syncToApifox(swaggerProps spec.SwaggerProps, req *SyncToApifoxRequest) {
 	importDataUrl := fmt.Sprintf(apifoxImportDataUrl, req.ProjectId)
 
 	headers := map[string]string{
-		"X-Apifox-Version": "X-Apifox-Version",
+		"X-Apifox-Version": "2024-01-20",
 		"Authorization":    "Bearer " + req.AccessToken,
 	}
 
@@ -372,25 +387,24 @@ func syncToApifox(swaggerProps spec.SwaggerProps, req *SyncToApifoxRequest) {
 	dirs := strings.Split(req.OutDir, "/")
 	createDirUrl := fmt.Sprintf(apifoxCreateDirUrl, req.ProjectId)
 	ctx := &dgctx.DgContext{TraceId: uuid.NewString()}
-	var parentId string
+	dirId := "0"
 
 	for _, dir := range dirs {
-		createDirBody := apifoxCreateDirBody{
-			Name:     dir,
-			ParentId: parentId,
+		createDirParams := map[string]string{
+			"name":     dir,
+			"parentId": dirId,
 		}
 
-		respBytes, err := dghttp.Client11.DoPostJson(ctx, createDirUrl, createDirBody, headers)
+		respBytes, err := dghttp.Client11.DoPostFormUrlEncoded(ctx, createDirUrl, createDirParams, headers)
 		if err != nil {
 			panic(err)
 		}
 		dglogger.Infof(ctx, "resp: %s", string(respBytes))
-
-		parentId = dir
+		apifoxResp := utils.MustConvertJsonBytesToBean[apifoxResult[apifoxCreateDirData]](respBytes)
+		dirId = strconv.FormatInt(apifoxResp.Data.Id, 10)
 	}
 
-	apiFolderId := dirs[len(dirs)-1]
-	importDataBody.ApiFolderId = &apiFolderId
+	importDataBody.ApiFolderId = &dirId
 
 	_, err = dghttp.Client11.DoPostJson(ctx, importDataUrl, importDataBody, headers)
 	if err != nil {
