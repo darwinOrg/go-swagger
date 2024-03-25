@@ -98,9 +98,6 @@ func SyncSwaggerToApifox(req *SyncToApifoxRequest) {
 	if len(req.RequestApis) == 0 {
 		panic("没有需要导出的接口定义")
 	}
-	if req.OutDir == "" {
-		panic("同步目录不能为空")
-	}
 
 	swaggerProps := buildSwaggerProps(req.ExportSwaggerRequest)
 	syncToApifox(swaggerProps, req)

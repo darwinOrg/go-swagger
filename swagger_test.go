@@ -77,7 +77,8 @@ func TestSyncToApifoxRequest(t *testing.T) {
 		ApiOverwriteMode:    swagger.ApiOverwriteModeIgnore,
 		SchemaOverwriteMode: swagger.SchemaOverwriteModeIgnore,
 		SyncApiFolder:       false,
-		ImportBasePath:      false,
+		//ApiFolderId:         158916687,
+		ImportBasePath: false,
 	})
 }
 
