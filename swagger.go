@@ -41,7 +41,7 @@ type SyncToApifoxRequest struct {
 	ApiOverwriteMode    ApiOverwriteMode    `json:"apiOverwriteMode"`    // 匹配到相同接口时的覆盖模式，不传表示忽略
 	SchemaOverwriteMode SchemaOverwriteMode `json:"schemaOverwriteMode"` // 匹配到相同数据模型时的覆盖模式，不传表示忽略
 	SyncApiFolder       bool                `json:"syncApiFolder"`       // 是否同步更新接口所在目录
-	ApiFolderId         int64               `json:"apiFolderId"`         // 导入到目标目录的ID，不传表示导入到根目录
+	ApiFolderId         int64               `json:"apiFolderId"`         // 导入到目标目录的ID
 	ImportBasePath      bool                `json:"importBasePath"`      // 是否在接口路径加上basePath，建议不传，即为false，推荐将BasePath放到环境里的“前置URL”里
 }
 
@@ -51,7 +51,7 @@ type apifoxImportDataBody struct {
 	ApiOverwriteMode    ApiOverwriteMode    `json:"apiOverwriteMode"`
 	SchemaOverwriteMode SchemaOverwriteMode `json:"schemaOverwriteMode"`
 	SyncApiFolder       bool                `json:"syncApiFolder"`
-	ApiFolderId         *string             `json:"apiFolderId,omitempty"`
+	ApiFolderId         string              `json:"apiFolderId,omitempty"`
 	ImportBasePath      bool                `json:"importBasePath"`
 }
 
@@ -406,7 +406,7 @@ func syncToApifox(swaggerProps spec.SwaggerProps, req *SyncToApifoxRequest) {
 		}
 	}
 
-	importDataBody.ApiFolderId = &apiFolderId
+	importDataBody.ApiFolderId = apiFolderId
 
 	_, err = dghttp.Client11.DoPostJson(ctx, importDataUrl, importDataBody, headers)
 	if err != nil {
