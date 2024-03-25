@@ -386,19 +386,16 @@ func syncToApifox(swaggerProps spec.SwaggerProps, req *SyncToApifoxRequest) {
 	}
 
 	ctx := &dgctx.DgContext{TraceId: uuid.NewString()}
+	apiFolderId := strconv.FormatInt(req.ApiFolderId, 10)
 
-	if req.ApiFolderId > 0 {
-		apiFolderId := strconv.FormatInt(req.ApiFolderId, 10)
-		importDataBody.ApiFolderId = &apiFolderId
-	} else if req.OutDir != "" {
+	if req.OutDir != "" {
 		dirs := strings.Split(req.OutDir, "/")
 		createDirUrl := fmt.Sprintf(apifoxCreateDirUrl, req.ProjectId)
-		dirId := "0"
 
 		for _, dir := range dirs {
 			createDirParams := map[string]string{
 				"name":     dir,
-				"parentId": dirId,
+				"parentId": apiFolderId,
 			}
 
 			respBytes, err := dghttp.Client11.DoPostFormUrlEncoded(ctx, createDirUrl, createDirParams, headers)
@@ -407,11 +404,11 @@ func syncToApifox(swaggerProps spec.SwaggerProps, req *SyncToApifoxRequest) {
 			}
 			dglogger.Infof(ctx, "resp: %s", string(respBytes))
 			apifoxResp := utils.MustConvertJsonBytesToBean[apifoxResult[apifoxCreateDirData]](respBytes)
-			dirId = strconv.FormatInt(apifoxResp.Data.Id, 10)
+			apiFolderId = strconv.FormatInt(apifoxResp.Data.Id, 10)
 		}
-
-		importDataBody.ApiFolderId = &dirId
 	}
+
+	importDataBody.ApiFolderId = &apiFolderId
 
 	_, err = dghttp.Client11.DoPostJson(ctx, importDataUrl, importDataBody, headers)
 	if err != nil {
