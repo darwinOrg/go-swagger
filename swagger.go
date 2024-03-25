@@ -3,8 +3,12 @@ package swagger
 import (
 	"encoding/json"
 	"fmt"
+	dgctx "github.com/darwinOrg/go-common/context"
+	dghttp "github.com/darwinOrg/go-httpclient"
+	dglogger "github.com/darwinOrg/go-logger"
 	"github.com/darwinOrg/go-web/wrapper"
 	"github.com/go-openapi/spec"
+	"github.com/google/uuid"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -13,7 +17,9 @@ import (
 )
 
 const (
-	contentTypeJson = "application/json"
+	contentTypeJson     = "application/json"
+	apifoxImportDataUrl = "https://api.apifox.com/api/v1/projects/%s/import-data?locale=zh-CN"
+	apifoxCreateDirUrl  = "https://api.apifox.com/api/v1/projects/%s/api-folders"
 )
 
 type ExportSwaggerRequest struct {
@@ -25,6 +31,49 @@ type ExportSwaggerRequest struct {
 	RequestApis []*wrapper.RequestApi
 }
 
+type SyncToApifoxRequest struct {
+	*ExportSwaggerRequest
+	ProjectId           string              `json:"projectId"`           // 项目 ID，打开 Apifox 进入项目里的“项目设置”查看
+	AccessToken         string              `json:"accessToken"`         // 身份认证，https://apifox.com/help/openapi/
+	ApiOverwriteMode    ApiOverwriteMode    `json:"apiOverwriteMode"`    // 匹配到相同接口时的覆盖模式，不传表示忽略
+	SchemaOverwriteMode SchemaOverwriteMode `json:"schemaOverwriteMode"` // 匹配到相同数据模型时的覆盖模式，不传表示忽略
+	SyncApiFolder       bool                `json:"syncApiFolder"`       // 是否同步更新接口所在目录
+	ImportBasePath      bool                `json:"importBasePath"`      // 是否在接口路径加上basePath，建议不传，即为false，推荐将BasePath放到环境里的“前置URL”里
+}
+
+type apifoxImportDataBody struct {
+	ImportFormat        string              `json:"importFormat"`
+	Data                string              `json:"data"`
+	ApiOverwriteMode    ApiOverwriteMode    `json:"apiOverwriteMode"`
+	SchemaOverwriteMode SchemaOverwriteMode `json:"schemaOverwriteMode"`
+	SyncApiFolder       bool                `json:"syncApiFolder"`
+	ApiFolderId         *string             `json:"apiFolderId,omitempty"`
+	ImportBasePath      bool                `json:"importBasePath"`
+}
+
+type apifoxCreateDirBody struct {
+	Name     string `json:"name"`
+	ParentId string `json:"parentId"`
+}
+
+type ApiOverwriteMode string
+
+const (
+	ApiOverwriteModeMethodAndPath ApiOverwriteMode = "methodAndPath"
+	ApiOverwriteModeBoth          ApiOverwriteMode = "both"
+	ApiOverwriteModeMerge         ApiOverwriteMode = "merge"
+	ApiOverwriteModeIgnore        ApiOverwriteMode = "ignore"
+)
+
+type SchemaOverwriteMode string
+
+const (
+	SchemaOverwriteModeName   SchemaOverwriteMode = "name"
+	SchemaOverwriteModeBoth   SchemaOverwriteMode = "both"
+	SchemaOverwriteModeMerge  SchemaOverwriteMode = "merge"
+	SchemaOverwriteModeIgnore SchemaOverwriteMode = "ignore"
+)
+
 func ExportSwaggerFile(req *ExportSwaggerRequest) {
 	if len(req.RequestApis) == 0 {
 		panic("没有需要导出的接口定义")
@@ -33,6 +82,24 @@ func ExportSwaggerFile(req *ExportSwaggerRequest) {
 		panic("服务名不能为空")
 	}
 
+	swaggerProps := buildSwaggerProps(req)
+	filename := fmt.Sprintf("%s/%s.swagger.json", req.OutDir, req.ServiceName)
+	saveToFile(swaggerProps, filename)
+}
+
+func SyncSwaggerToApifox(req *SyncToApifoxRequest) {
+	if len(req.RequestApis) == 0 {
+		panic("没有需要导出的接口定义")
+	}
+	if req.OutDir == "" {
+		panic("同步目录不能为空")
+	}
+
+	swaggerProps := buildSwaggerProps(req.ExportSwaggerRequest)
+	syncToApifox(swaggerProps, req)
+}
+
+func buildSwaggerProps(req *ExportSwaggerRequest) spec.SwaggerProps {
 	if req.Title == "" {
 		req.Title = "接口文档"
 	}
@@ -46,7 +113,7 @@ func ExportSwaggerFile(req *ExportSwaggerRequest) {
 		req.Version = "v1.0.0"
 	}
 
-	swaggerProps := spec.SwaggerProps{
+	return spec.SwaggerProps{
 		Swagger:             "2.0",
 		Definitions:         spec.Definitions{},
 		SecurityDefinitions: spec.SecurityDefinitions{},
@@ -59,9 +126,6 @@ func ExportSwaggerFile(req *ExportSwaggerRequest) {
 		},
 		Paths: buildApiPaths(req.RequestApis),
 	}
-
-	filename := fmt.Sprintf("%s/%s.swagger.json", req.OutDir, req.ServiceName)
-	saveSwagger(swaggerProps, filename)
 }
 
 func buildApiPaths(requestApis []*wrapper.RequestApi) *spec.Paths {
@@ -232,7 +296,29 @@ func buildResponses(api *wrapper.RequestApi) *spec.Responses {
 	}
 }
 
-func saveSwagger(swaggerProps spec.SwaggerProps, filename string) {
+func extractNameFromField(field reflect.StructField) string {
+	jsonTag := field.Tag.Get("json")
+	if jsonTag != "" {
+		return jsonTag
+	} else {
+		if len(field.Name) == 1 {
+			return strings.ToLower(field.Name)
+		}
+
+		return strings.ToLower(field.Name[0:1]) + field.Name[1:]
+	}
+}
+
+func extractRequiredFlagFromField(field reflect.StructField) bool {
+	bindingTag := field.Tag.Get("binding")
+	return bindingTag != "" && strings.Contains(bindingTag, "required")
+}
+
+func extractDescriptionFromField(field reflect.StructField) string {
+	return field.Tag.Get("remark")
+}
+
+func saveToFile(swaggerProps spec.SwaggerProps, filename string) {
 	swaggerJSON, err := json.MarshalIndent(swaggerProps, "", "  ")
 	if err != nil {
 		panic(err)
@@ -254,24 +340,60 @@ func saveSwagger(swaggerProps spec.SwaggerProps, filename string) {
 	}
 }
 
-func extractNameFromField(field reflect.StructField) string {
-	jsonTag := field.Tag.Get("json")
-	if jsonTag != "" {
-		return jsonTag
-	} else {
-		if len(field.Name) == 1 {
-			return strings.ToLower(field.Name)
+func syncToApifox(swaggerProps spec.SwaggerProps, req *SyncToApifoxRequest) {
+	swaggerJSON, err := json.MarshalIndent(swaggerProps, "", "  ")
+	if err != nil {
+		panic(err)
+	}
+
+	if string(req.ApiOverwriteMode) == "" {
+		req.ApiOverwriteMode = ApiOverwriteModeIgnore
+	}
+	if string(req.SchemaOverwriteMode) == "" {
+		req.SchemaOverwriteMode = SchemaOverwriteModeIgnore
+	}
+
+	importDataUrl := fmt.Sprintf(apifoxImportDataUrl, req.ProjectId)
+
+	headers := map[string]string{
+		"X-Apifox-Version": "X-Apifox-Version",
+		"Authorization":    "Bearer " + req.AccessToken,
+	}
+
+	importDataBody := apifoxImportDataBody{
+		ImportFormat:        "openapi",
+		Data:                string(swaggerJSON),
+		ApiOverwriteMode:    req.ApiOverwriteMode,
+		SchemaOverwriteMode: req.SchemaOverwriteMode,
+		SyncApiFolder:       req.SyncApiFolder,
+		ImportBasePath:      req.ImportBasePath,
+	}
+
+	dirs := strings.Split(req.OutDir, "/")
+	createDirUrl := fmt.Sprintf(apifoxCreateDirUrl, req.ProjectId)
+	ctx := &dgctx.DgContext{TraceId: uuid.NewString()}
+	var parentId string
+
+	for _, dir := range dirs {
+		createDirBody := apifoxCreateDirBody{
+			Name:     dir,
+			ParentId: parentId,
 		}
 
-		return strings.ToLower(field.Name[0:1]) + field.Name[1:]
+		respBytes, err := dghttp.Client11.DoPostJson(ctx, createDirUrl, createDirBody, headers)
+		if err != nil {
+			panic(err)
+		}
+		dglogger.Infof(ctx, "resp: %s", string(respBytes))
+
+		parentId = dir
 	}
-}
 
-func extractRequiredFlagFromField(field reflect.StructField) bool {
-	bindingTag := field.Tag.Get("binding")
-	return bindingTag != "" && strings.Contains(bindingTag, "required")
-}
+	apiFolderId := dirs[len(dirs)-1]
+	importDataBody.ApiFolderId = &apiFolderId
 
-func extractDescriptionFromField(field reflect.StructField) string {
-	return field.Tag.Get("remark")
+	_, err = dghttp.Client11.DoPostJson(ctx, importDataUrl, importDataBody, headers)
+	if err != nil {
+		panic(err)
+	}
 }

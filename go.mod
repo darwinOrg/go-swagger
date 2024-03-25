@@ -14,6 +14,7 @@ require (
 	github.com/chenzhuoyu/base64x v0.0.0-20230717121745-296ad89f973d // indirect
 	github.com/chenzhuoyu/iasm v0.9.1 // indirect
 	github.com/darwinOrg/go-common v0.1.24 // indirect
+	github.com/darwinOrg/go-httpclient v0.1.7 // indirect
 	github.com/darwinOrg/go-logger v0.0.5 // indirect
 	github.com/darwinOrg/go-monitor v0.0.3 // indirect
 	github.com/darwinOrg/go-validator-ext v0.0.5 // indirect

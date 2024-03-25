@@ -10,7 +10,7 @@ import (
 	"testing"
 )
 
-func TestExport(t *testing.T) {
+func TestExportSwaggerFile(t *testing.T) {
 	engine := wrapper.DefaultEngine()
 
 	wrapper.Get(&wrapper.RequestHolder[wrapper.MapRequest, *result.Result[*result.Void]]{
@@ -40,6 +40,44 @@ func TestExport(t *testing.T) {
 		//OutDir:      "openapi/v1",
 		//Version:     "v0.0.1",
 		RequestApis: wrapper.GetRequestApis(),
+	})
+}
+
+func TestSyncToApifoxRequest(t *testing.T) {
+	engine := wrapper.DefaultEngine()
+
+	wrapper.Get(&wrapper.RequestHolder[wrapper.MapRequest, *result.Result[*result.Void]]{
+		Remark:       "测试get接口",
+		RouterGroup:  engine.Group("/test"),
+		RelativePath: "/get",
+		NonLogin:     true,
+		BizHandler: func(_ *gin.Context, ctx *dgctx.DgContext, request *wrapper.MapRequest) *result.Result[*result.Void] {
+			return result.SimpleSuccess()
+		},
+	})
+
+	wrapper.Post(&wrapper.RequestHolder[UserRequest, *result.Result[*page.PageList[*UserRequest]]]{
+		Remark:       "测试post接口",
+		RouterGroup:  engine.Group("/test"),
+		RelativePath: "post",
+		NonLogin:     true,
+		BizHandler: func(gc *gin.Context, ctx *dgctx.DgContext, request *UserRequest) *result.Result[*page.PageList[*UserRequest]] {
+			return result.Success[*page.PageList[*UserRequest]](nil)
+		},
+	})
+
+	swagger.SyncSwaggerToApifox(&swagger.SyncToApifoxRequest{
+		ExportSwaggerRequest: &swagger.ExportSwaggerRequest{
+			ServiceName: "test-service",
+			OutDir:      "测试1/测试2",
+			RequestApis: wrapper.GetRequestApis(),
+		},
+		ProjectId:           "3450238",
+		AccessToken:         "APS-d4KgT80K2Wu89UAUc6r94NchTH6SJeFM",
+		ApiOverwriteMode:    swagger.ApiOverwriteModeIgnore,
+		SchemaOverwriteMode: swagger.SchemaOverwriteModeIgnore,
+		SyncApiFolder:       false,
+		ImportBasePath:      false,
 	})
 }
 
