@@ -22,6 +22,7 @@ const (
 	contentTypeJson     = "application/json"
 	apifoxImportDataUrl = "https://api.apifox.com/api/v1/projects/%s/import-data?locale=zh-CN"
 	apifoxCreateDirUrl  = "https://api.apifox.com/api/v1/projects/%s/api-folders"
+	apifoxDetailDirUrl  = "https://api.apifox.com/api/v1/projects/%s/api-detail-folders"
 )
 
 type ExportSwaggerRequest struct {
