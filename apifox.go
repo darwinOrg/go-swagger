@@ -26,7 +26,7 @@ type SyncToApifoxRequest struct {
 	Description         string
 	Version             string
 	ProjectId           string              // 项目 ID，打开 Apifox 进入项目里的“项目设置”查看
-	AccessToken         string              // 身份认证，https://apifox.com/help/openapi/
+	AccessToken         string              // 身份认证，从网页版apifox登录后，从某个XHR接口的Authorization请求头获取Bearer后的token
 	ApiOverwriteMode    ApiOverwriteMode    // 匹配到相同接口时的覆盖模式，不传表示忽略
 	SchemaOverwriteMode SchemaOverwriteMode // 匹配到相同数据模型时的覆盖模式，不传表示忽略
 	SyncApiFolder       bool                // 是否同步更新接口所在目录
