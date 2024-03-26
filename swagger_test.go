@@ -67,18 +67,15 @@ func TestSyncToApifoxRequest(t *testing.T) {
 	})
 
 	swagger.SyncSwaggerToApifox(&swagger.SyncToApifoxRequest{
-		ExportSwaggerRequest: &swagger.ExportSwaggerRequest{
-			ServiceName: "test-service",
-			OutDir:      "测试1/测试2",
-			RequestApis: wrapper.GetRequestApis(),
-		},
-		ProjectId:           "3450238",
-		AccessToken:         "APS-d4KgT80K2Wu89UAUc6r94NchTH6SJeFM",
+		RequestApis: wrapper.GetRequestApis(),
+		ProjectId:   "3450238",
+		AccessToken: "APS-d4KgT80K2Wu89UAUc6r94NchTH6SJeFM",
+		//AccessToken:         "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6NDIyNzIxLCJ0cyI6IjgwYjI4MmIzOTNkMGY2MmMiLCJpYXQiOjE2OTUyODkxOTI0NzF9.U5ly2UQ0rpTIO_zdh68_pGvw7PvkZlW3lwTbg-cWySU",
 		ApiOverwriteMode:    swagger.ApiOverwriteModeIgnore,
 		SchemaOverwriteMode: swagger.SchemaOverwriteModeIgnore,
 		SyncApiFolder:       false,
-		//ApiFolderId:         158916687,
-		ImportBasePath: false,
+		ImportBasePath:      false,
+		ApiFolderPath:       "测试1/测试2",
 	})
 }
 

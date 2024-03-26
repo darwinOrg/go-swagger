@@ -3,88 +3,33 @@ package swagger
 import (
 	"encoding/json"
 	"fmt"
-	dgctx "github.com/darwinOrg/go-common/context"
-	"github.com/darwinOrg/go-common/utils"
-	dghttp "github.com/darwinOrg/go-httpclient"
-	dglogger "github.com/darwinOrg/go-logger"
 	"github.com/darwinOrg/go-web/wrapper"
 	"github.com/go-openapi/spec"
-	"github.com/google/uuid"
+	"log"
 	"net/http"
 	"os"
 	"path/filepath"
 	"reflect"
-	"strconv"
 	"strings"
 )
 
 const (
-	contentTypeJson     = "application/json"
-	apifoxImportDataUrl = "https://api.apifox.com/api/v1/projects/%s/import-data?locale=zh-CN"
-	apifoxCreateDirUrl  = "https://api.apifox.com/api/v1/projects/%s/api-folders"
-	apifoxDetailDirUrl  = "https://api.apifox.com/api/v1/projects/%s/api-detail-folders"
+	contentTypeJson = "application/json"
 )
 
 type ExportSwaggerRequest struct {
-	ServiceName string
 	Title       string
 	Description string
-	OutDir      string
 	Version     string
 	RequestApis []*wrapper.RequestApi
+	OutDir      string
+	ServiceName string
 }
-
-type SyncToApifoxRequest struct {
-	*ExportSwaggerRequest
-	ProjectId           string              `json:"projectId"`           // 项目 ID，打开 Apifox 进入项目里的“项目设置”查看
-	AccessToken         string              `json:"accessToken"`         // 身份认证，https://apifox.com/help/openapi/
-	ApiOverwriteMode    ApiOverwriteMode    `json:"apiOverwriteMode"`    // 匹配到相同接口时的覆盖模式，不传表示忽略
-	SchemaOverwriteMode SchemaOverwriteMode `json:"schemaOverwriteMode"` // 匹配到相同数据模型时的覆盖模式，不传表示忽略
-	SyncApiFolder       bool                `json:"syncApiFolder"`       // 是否同步更新接口所在目录
-	ApiFolderId         int64               `json:"apiFolderId"`         // 导入到目标目录的ID
-	ImportBasePath      bool                `json:"importBasePath"`      // 是否在接口路径加上basePath，建议不传，即为false，推荐将BasePath放到环境里的“前置URL”里
-}
-
-type apifoxImportDataBody struct {
-	ImportFormat        string              `json:"importFormat"`
-	Data                string              `json:"data"`
-	ApiOverwriteMode    ApiOverwriteMode    `json:"apiOverwriteMode"`
-	SchemaOverwriteMode SchemaOverwriteMode `json:"schemaOverwriteMode"`
-	SyncApiFolder       bool                `json:"syncApiFolder"`
-	ApiFolderId         string              `json:"apiFolderId,omitempty"`
-	ImportBasePath      bool                `json:"importBasePath"`
-}
-
-type apifoxResult[T any] struct {
-	Success bool `json:"success"`
-	Data    T    `json:"data"`
-}
-
-type apifoxCreateDirData struct {
-	Id int64 `json:"id"`
-}
-
-type ApiOverwriteMode string
-
-const (
-	ApiOverwriteModeMethodAndPath ApiOverwriteMode = "methodAndPath"
-	ApiOverwriteModeBoth          ApiOverwriteMode = "both"
-	ApiOverwriteModeMerge         ApiOverwriteMode = "merge"
-	ApiOverwriteModeIgnore        ApiOverwriteMode = "ignore"
-)
-
-type SchemaOverwriteMode string
-
-const (
-	SchemaOverwriteModeName   SchemaOverwriteMode = "name"
-	SchemaOverwriteModeBoth   SchemaOverwriteMode = "both"
-	SchemaOverwriteModeMerge  SchemaOverwriteMode = "merge"
-	SchemaOverwriteModeIgnore SchemaOverwriteMode = "ignore"
-)
 
 func ExportSwaggerFile(req *ExportSwaggerRequest) {
 	if len(req.RequestApis) == 0 {
-		panic("没有需要导出的接口定义")
+		log.Print("没有需要导出的接口定义")
+		return
 	}
 	if req.ServiceName == "" {
 		panic("服务名不能为空")
@@ -93,15 +38,6 @@ func ExportSwaggerFile(req *ExportSwaggerRequest) {
 	swaggerProps := buildSwaggerProps(req)
 	filename := fmt.Sprintf("%s/%s.swagger.json", req.OutDir, req.ServiceName)
 	saveToFile(swaggerProps, filename)
-}
-
-func SyncSwaggerToApifox(req *SyncToApifoxRequest) {
-	if len(req.RequestApis) == 0 {
-		panic("没有需要导出的接口定义")
-	}
-
-	swaggerProps := buildSwaggerProps(req.ExportSwaggerRequest)
-	syncToApifox(swaggerProps, req)
 }
 
 func buildSwaggerProps(req *ExportSwaggerRequest) spec.SwaggerProps {
@@ -349,66 +285,6 @@ func saveToFile(swaggerProps spec.SwaggerProps, filename string) {
 	}
 
 	err = os.WriteFile(filename, swaggerJSON, os.ModePerm)
-	if err != nil {
-		panic(err)
-	}
-}
-
-func syncToApifox(swaggerProps spec.SwaggerProps, req *SyncToApifoxRequest) {
-	swaggerJSON, err := json.MarshalIndent(swaggerProps, "", "  ")
-	if err != nil {
-		panic(err)
-	}
-
-	if string(req.ApiOverwriteMode) == "" {
-		req.ApiOverwriteMode = ApiOverwriteModeIgnore
-	}
-	if string(req.SchemaOverwriteMode) == "" {
-		req.SchemaOverwriteMode = SchemaOverwriteModeIgnore
-	}
-
-	importDataUrl := fmt.Sprintf(apifoxImportDataUrl, req.ProjectId)
-
-	headers := map[string]string{
-		"X-Apifox-Version": "2024-01-20",
-		"Authorization":    "Bearer " + req.AccessToken,
-	}
-
-	importDataBody := apifoxImportDataBody{
-		ImportFormat:        "openapi",
-		Data:                string(swaggerJSON),
-		ApiOverwriteMode:    req.ApiOverwriteMode,
-		SchemaOverwriteMode: req.SchemaOverwriteMode,
-		SyncApiFolder:       req.SyncApiFolder,
-		ImportBasePath:      req.ImportBasePath,
-	}
-
-	ctx := &dgctx.DgContext{TraceId: uuid.NewString()}
-	apiFolderId := strconv.FormatInt(req.ApiFolderId, 10)
-
-	if req.OutDir != "" {
-		dirs := strings.Split(req.OutDir, "/")
-		createDirUrl := fmt.Sprintf(apifoxCreateDirUrl, req.ProjectId)
-
-		for _, dir := range dirs {
-			createDirParams := map[string]string{
-				"name":     dir,
-				"parentId": apiFolderId,
-			}
-
-			respBytes, err := dghttp.Client11.DoPostFormUrlEncoded(ctx, createDirUrl, createDirParams, headers)
-			if err != nil {
-				panic(err)
-			}
-			dglogger.Infof(ctx, "resp: %s", string(respBytes))
-			apifoxResp := utils.MustConvertJsonBytesToBean[apifoxResult[apifoxCreateDirData]](respBytes)
-			apiFolderId = strconv.FormatInt(apifoxResp.Data.Id, 10)
-		}
-	}
-
-	importDataBody.ApiFolderId = apiFolderId
-
-	_, err = dghttp.Client11.DoPostJson(ctx, importDataUrl, importDataBody, headers)
 	if err != nil {
 		panic(err)
 	}
