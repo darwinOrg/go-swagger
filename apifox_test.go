@@ -25,8 +25,7 @@ func TestSyncToApifoxRequest(t *testing.T) {
 		RelativePath: "post",
 	})
 
-	swagger.SyncSwaggerToApifox(&swagger.SyncToApifoxRequest{
-		RequestApis:         wrapper.GetRequestApis(),
+	swagger.SyncRequestApisToApifox(&swagger.SyncToApifoxRequest{
 		ProjectId:           "3450238",
 		AccessToken:         os.Getenv("APIFOX_TOKEN"),
 		ApiOverwriteMode:    swagger.ApiOverwriteModeIgnore,
@@ -34,5 +33,17 @@ func TestSyncToApifoxRequest(t *testing.T) {
 		SyncApiFolder:       false,
 		ImportBasePath:      false,
 		ApiFolderPath:       "测试1/测试2",
-	})
+	}, wrapper.GetRequestApis())
+}
+
+func TestSyncSwaggerJsonFileToApifox(t *testing.T) {
+	swagger.SyncSwaggerJsonFileToApifox(&swagger.SyncToApifoxRequest{
+		ProjectId:           "3450238",
+		AccessToken:         os.Getenv("APIFOX_TOKEN"),
+		ApiOverwriteMode:    swagger.ApiOverwriteModeIgnore,
+		SchemaOverwriteMode: swagger.SchemaOverwriteModeIgnore,
+		SyncApiFolder:       false,
+		ImportBasePath:      false,
+		ApiFolderPath:       "测试1/测试2",
+	}, "test.swagger.json")
 }

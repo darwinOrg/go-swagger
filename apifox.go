@@ -8,9 +8,9 @@ import (
 	dghttp "github.com/darwinOrg/go-httpclient"
 	dglogger "github.com/darwinOrg/go-logger"
 	"github.com/darwinOrg/go-web/wrapper"
-	"github.com/go-openapi/spec"
 	"github.com/google/uuid"
 	"log"
+	"os"
 	"strconv"
 	"strings"
 )
@@ -25,7 +25,6 @@ type SyncToApifoxRequest struct {
 	Title               string
 	Description         string
 	Version             string
-	RequestApis         []*wrapper.RequestApi
 	ProjectId           string              // 项目 ID，打开 Apifox 进入项目里的“项目设置”查看
 	AccessToken         string              // 身份认证，https://apifox.com/help/openapi/
 	ApiOverwriteMode    ApiOverwriteMode    // 匹配到相同接口时的覆盖模式，不传表示忽略
@@ -78,8 +77,8 @@ const (
 	SchemaOverwriteModeIgnore SchemaOverwriteMode = "ignore"
 )
 
-func SyncSwaggerToApifox(req *SyncToApifoxRequest) {
-	if len(req.RequestApis) == 0 {
+func SyncRequestApisToApifox(req *SyncToApifoxRequest, requestApis []*wrapper.RequestApi) {
+	if len(requestApis) == 0 {
 		log.Print("没有需要导出的接口定义")
 		return
 	}
@@ -88,18 +87,26 @@ func SyncSwaggerToApifox(req *SyncToApifoxRequest) {
 		Title:       req.Title,
 		Description: req.Description,
 		Version:     req.Version,
-		RequestApis: req.RequestApis,
+		RequestApis: requestApis,
 	})
-
-	syncToApifox(swaggerProps, req)
-}
-
-func syncToApifox(swaggerProps spec.SwaggerProps, req *SyncToApifoxRequest) {
-	swaggerJSON, err := json.MarshalIndent(swaggerProps, "", "  ")
+	swaggerJsonBytes, err := json.MarshalIndent(swaggerProps, "", "  ")
 	if err != nil {
 		panic(err)
 	}
 
+	syncToApifox(req, swaggerJsonBytes)
+}
+
+func SyncSwaggerJsonFileToApifox(req *SyncToApifoxRequest, swaggerJsonFile string) {
+	swaggerJsonBytes, err := os.ReadFile(swaggerJsonFile)
+	if err != nil {
+		panic(err)
+	}
+
+	syncToApifox(req, swaggerJsonBytes)
+}
+
+func syncToApifox(req *SyncToApifoxRequest, swaggerJsonBytes []byte) {
 	if string(req.ApiOverwriteMode) == "" {
 		req.ApiOverwriteMode = ApiOverwriteModeIgnore
 	}
@@ -116,7 +123,7 @@ func syncToApifox(swaggerProps spec.SwaggerProps, req *SyncToApifoxRequest) {
 
 	importDataBody := apifoxImportDataBody{
 		ImportFormat:        "openapi",
-		Data:                string(swaggerJSON),
+		Data:                string(swaggerJsonBytes),
 		ApiOverwriteMode:    req.ApiOverwriteMode,
 		SchemaOverwriteMode: req.SchemaOverwriteMode,
 		SyncApiFolder:       req.SyncApiFolder,
@@ -176,7 +183,7 @@ func syncToApifox(swaggerProps spec.SwaggerProps, req *SyncToApifoxRequest) {
 
 	importDataBody.ApiFolderId = strconv.FormatInt(apiFolderId, 10)
 
-	_, err = dghttp.Client11.DoPostJson(ctx, importDataUrl, importDataBody, headers)
+	_, err := dghttp.Client11.DoPostJson(ctx, importDataUrl, importDataBody, headers)
 	if err != nil {
 		panic(err)
 	}
