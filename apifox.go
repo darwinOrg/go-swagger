@@ -94,7 +94,7 @@ func SyncRequestApisToApifox(req *SyncToApifoxRequest, requestApis []*wrapper.Re
 		panic(err)
 	}
 
-	syncToApifox(req, swaggerJsonBytes)
+	SyncSwaggerJsonBytesToApifox(req, swaggerJsonBytes)
 }
 
 func SyncSwaggerJsonFileToApifox(req *SyncToApifoxRequest, swaggerJsonFile string) {
@@ -103,10 +103,10 @@ func SyncSwaggerJsonFileToApifox(req *SyncToApifoxRequest, swaggerJsonFile strin
 		panic(err)
 	}
 
-	syncToApifox(req, swaggerJsonBytes)
+	SyncSwaggerJsonBytesToApifox(req, swaggerJsonBytes)
 }
 
-func syncToApifox(req *SyncToApifoxRequest, swaggerJsonBytes []byte) {
+func SyncSwaggerJsonBytesToApifox(req *SyncToApifoxRequest, swaggerJsonBytes []byte) {
 	if string(req.ApiOverwriteMode) == "" {
 		req.ApiOverwriteMode = ApiOverwriteModeIgnore
 	}
