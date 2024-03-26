@@ -10,7 +10,7 @@ import (
 	"testing"
 )
 
-func TestExportSwaggerFile(t *testing.T) {
+func TestSyncToApifoxRequest(t *testing.T) {
 	engine := gin.Default()
 
 	wrapper.Get(&wrapper.RequestHolder[wrapper.MapRequest, *result.Result[*result.Void]]{
@@ -33,22 +33,15 @@ func TestExportSwaggerFile(t *testing.T) {
 		},
 	})
 
-	swagger.ExportSwaggerFile(&swagger.ExportSwaggerRequest{
-		ServiceName: "test-service",
-		//Title:       "测试服务标题",
-		//Description: "测试服务描述",
-		//OutDir:      "openapi/v1",
-		//Version:     "v0.0.1",
+	swagger.SyncSwaggerToApifox(&swagger.SyncToApifoxRequest{
 		RequestApis: wrapper.GetRequestApis(),
+		ProjectId:   "3450238",
+		AccessToken: "APS-d4KgT80K2Wu89UAUc6r94NchTH6SJeFM",
+		//AccessToken:         "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6NDIyNzIxLCJ0cyI6IjgwYjI4MmIzOTNkMGY2MmMiLCJpYXQiOjE2OTUyODkxOTI0NzF9.U5ly2UQ0rpTIO_zdh68_pGvw7PvkZlW3lwTbg-cWySU",
+		ApiOverwriteMode:    swagger.ApiOverwriteModeIgnore,
+		SchemaOverwriteMode: swagger.SchemaOverwriteModeIgnore,
+		SyncApiFolder:       false,
+		ImportBasePath:      false,
+		ApiFolderPath:       "测试1/测试2",
 	})
-}
-
-type UserRequest struct {
-	Name     string    `binding:"required" errMsg:"姓名错误:不能为空" title:"名称" remark:"名称"`
-	Age      int       `binding:"required,gt=0,lt=100" title:"名称" remark:"年龄"`
-	UserInfo *userInfo `binding:"required"`
-}
-
-type userInfo struct {
-	Sex int `binding:"required,gt=0,lt=5" errMsg:"性别错误" title:"性别" remark:"性别，0：男，1：女"`
 }
