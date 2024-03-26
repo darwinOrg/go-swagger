@@ -45,7 +45,7 @@ func TestExportSwaggerFile(t *testing.T) {
 
 type UserRequest struct {
 	Name     string    `binding:"required" errMsg:"姓名错误:不能为空" title:"名称" remark:"名称"`
-	Age      int       `binding:"required,gt=0,lt=100" title:"名称" remark:"年龄"`
+	Age      int       `binding:"required,gt=0,lt=100" title:"年龄" remark:"年龄"`
 	UserInfo *userInfo `binding:"required"`
 }
 
