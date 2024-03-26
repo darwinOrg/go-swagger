@@ -26,8 +26,8 @@ func TestSyncToApifoxRequest(t *testing.T) {
 	})
 
 	swagger.SyncRequestApisToApifox(&swagger.SyncToApifoxRequest{
-		ProjectId:           "3450238",
-		AccessToken:         os.Getenv("APIFOX_TOKEN"),
+		ProjectId:           os.Getenv("APIFOX_PROJECT_ID"),
+		AccessToken:         os.Getenv("APIFOX_ACCESS_TOKEN"),
 		ApiOverwriteMode:    swagger.ApiOverwriteModeIgnore,
 		SchemaOverwriteMode: swagger.SchemaOverwriteModeIgnore,
 		SyncApiFolder:       false,
@@ -38,8 +38,8 @@ func TestSyncToApifoxRequest(t *testing.T) {
 
 func TestSyncSwaggerJsonFileToApifox(t *testing.T) {
 	swagger.SyncSwaggerJsonFileToApifox(&swagger.SyncToApifoxRequest{
-		ProjectId:           "3450238",
-		AccessToken:         os.Getenv("APIFOX_TOKEN"),
+		ProjectId:           os.Getenv("APIFOX_PROJECT_ID"),
+		AccessToken:         os.Getenv("APIFOX_ACCESS_TOKEN"),
 		ApiOverwriteMode:    swagger.ApiOverwriteModeIgnore,
 		SchemaOverwriteMode: swagger.SchemaOverwriteModeIgnore,
 		SyncApiFolder:       false,
