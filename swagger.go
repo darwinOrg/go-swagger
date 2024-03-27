@@ -210,12 +210,23 @@ func createSchemaForType(tpe reflect.Type, depth int) *spec.Schema {
 				field.Type = dataType
 			}
 
+			tpeStr := tpe.String()
+			tpeStr = strings.TrimPrefix(tpeStr, "*")
+
+			fieldTypeStr := field.Type.String()
+			fieldTypeStr = strings.TrimPrefix(fieldTypeStr, "[]")
+			fieldTypeStr = strings.TrimPrefix(fieldTypeStr, "*")
+
 			// 如果有结构体类型名称和字段名称相同，将导致无限循环，需要跳过
-			if tpe.String() == field.Type.String() {
+			if tpeStr == fieldTypeStr {
 				continue
 			}
 
 			property := createSchemaForType(field.Type, depth+1)
+			if property == nil {
+				continue
+			}
+
 			property.Title = extractTitleFromField(field)
 			property.Description = extractDescriptionFromField(field)
 			fieldName := extractNameFromField(field)

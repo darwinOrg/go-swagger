@@ -10,16 +10,28 @@ import (
 	"testing"
 )
 
+type TagVo struct {
+	Id              int64  `json:"id" remark:"id"`
+	Name            string `json:"name" remark:"名称"`
+	CreatedAt       string `json:"createdAt,omitempty" remark:"创建时间"`
+	CreatedUserName string `json:"createdUserName,omitempty" remark:"创建人名称"`
+}
+
+type TagTreeVo struct {
+	*TagVo
+	Children []*TagTreeVo `json:"children" remark:"子标签"`
+}
+
 func TestSyncToApifoxRequest(t *testing.T) {
 	engine := gin.Default()
 
-	wrapper.Get(&wrapper.RequestHolder[wrapper.MapRequest, *result.Result[*result.Void]]{
-		Remark:       "测试get接口",
-		RouterGroup:  engine.Group("/test"),
-		RelativePath: "/get",
-	})
+	//wrapper.Get(&wrapper.RequestHolder[wrapper.MapRequest, *result.Result[*result.Void]]{
+	//	Remark:       "测试get接口",
+	//	RouterGroup:  engine.Group("/test"),
+	//	RelativePath: "/get",
+	//})
 
-	wrapper.Post(&wrapper.RequestHolder[UserRequest, *result.Result[*page.PageList[*UserRequest]]]{
+	wrapper.Post(&wrapper.RequestHolder[UserRequest, *result.Result[*page.PageList[*TagTreeVo]]]{
 		Remark:       "测试post接口",
 		RouterGroup:  engine.Group("/test"),
 		RelativePath: "post",
