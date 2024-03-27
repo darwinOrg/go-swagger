@@ -25,11 +25,11 @@ type TagTreeVo struct {
 func TestSyncToApifoxRequest(t *testing.T) {
 	engine := gin.Default()
 
-	//wrapper.Get(&wrapper.RequestHolder[wrapper.MapRequest, *result.Result[*result.Void]]{
-	//	Remark:       "测试get接口",
-	//	RouterGroup:  engine.Group("/test"),
-	//	RelativePath: "/get",
-	//})
+	wrapper.Get(&wrapper.RequestHolder[wrapper.MapRequest, *result.Result[*result.Void]]{
+		Remark:       "测试get接口",
+		RouterGroup:  engine.Group("/test"),
+		RelativePath: "/get",
+	})
 
 	wrapper.Post(&wrapper.RequestHolder[UserRequest, *result.Result[*page.PageList[*TagTreeVo]]]{
 		Remark:       "测试post接口",
