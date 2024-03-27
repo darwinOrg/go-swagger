@@ -157,8 +157,8 @@ func buildPostParameters(api *wrapper.RequestApi) []spec.Parameter {
 }
 
 func createSchemaForType(tpe reflect.Type, depth int) *spec.Schema {
-	// 限制递归深度最大为5
-	if depth > 5 {
+	// 限制递归深度最大为8
+	if depth > 8 {
 		return nil
 	}
 
@@ -260,8 +260,8 @@ func buildResponses(api *wrapper.RequestApi) *spec.Responses {
 
 func extractNameFromField(field reflect.StructField) string {
 	jsonTag := field.Tag.Get("json")
-	if jsonTag != "" {
-		return jsonTag
+	if jsonTag != "" && jsonTag != "-" {
+		return strings.ReplaceAll(jsonTag, ",omitempty", "")
 	} else {
 		if len(field.Name) == 1 {
 			return strings.ToLower(field.Name)

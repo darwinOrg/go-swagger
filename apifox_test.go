@@ -40,7 +40,7 @@ func TestSyncToApifoxRequest(t *testing.T) {
 	swagger.SyncRequestApisToApifox(&swagger.SyncToApifoxRequest{
 		ProjectId:           os.Getenv("APIFOX_PROJECT_ID"),
 		AccessToken:         os.Getenv("APIFOX_ACCESS_TOKEN"),
-		ApiOverwriteMode:    swagger.ApiOverwriteModeIgnore,
+		ApiOverwriteMode:    swagger.ApiOverwriteModeMethodAndPath,
 		SchemaOverwriteMode: swagger.SchemaOverwriteModeIgnore,
 		SyncApiFolder:       false,
 		ImportBasePath:      false,
