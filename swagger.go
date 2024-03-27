@@ -150,13 +150,18 @@ func buildGetParameters(api *wrapper.RequestApi) []spec.Parameter {
 }
 
 func buildPostParameters(api *wrapper.RequestApi) []spec.Parameter {
-	schema := createSchemaForType(reflect.TypeOf(api.RequestObject))
+	schema := createSchemaForType(reflect.TypeOf(api.RequestObject), 0)
 	bodyParam := *spec.BodyParam("body", schema)
 	bodyParam.Required = true
 	return []spec.Parameter{bodyParam}
 }
 
-func createSchemaForType(tpe reflect.Type) *spec.Schema {
+func createSchemaForType(tpe reflect.Type, depth int) *spec.Schema {
+	// 限制递归深度最大为5
+	if depth > 5 {
+		return nil
+	}
+
 	for tpe.Kind() == reflect.Pointer {
 		tpe = tpe.Elem()
 	}
@@ -173,7 +178,7 @@ func createSchemaForType(tpe reflect.Type) *spec.Schema {
 		schema.Type = []string{"number"}
 	case reflect.Slice, reflect.Array:
 		elemType := tpe.Elem()
-		itemSchema := createSchemaForType(elemType)
+		itemSchema := createSchemaForType(elemType, depth+1)
 		schema.Type = []string{"array"}
 		schema.Items = &spec.SchemaOrArray{Schema: itemSchema}
 	case reflect.Map:
@@ -182,7 +187,7 @@ func createSchemaForType(tpe reflect.Type) *spec.Schema {
 			panic("Map keys must be strings in OpenAPI schemas.")
 		}
 		valueType := tpe.Elem()
-		valueSchema := createSchemaForType(valueType)
+		valueSchema := createSchemaForType(valueType, depth+1)
 		schema.Type = []string{"object"}
 		schema.AdditionalProperties = &spec.SchemaOrBool{
 			Allows: true,
@@ -205,7 +210,12 @@ func createSchemaForType(tpe reflect.Type) *spec.Schema {
 				field.Type = dataType
 			}
 
-			property := createSchemaForType(field.Type)
+			// 如果有结构体类型名称和字段名称相同，将导致无限循环，需要跳过
+			if tpe.String() == field.Type.String() {
+				continue
+			}
+
+			property := createSchemaForType(field.Type, depth+1)
 			property.Title = extractTitleFromField(field)
 			property.Description = extractDescriptionFromField(field)
 			fieldName := extractNameFromField(field)
@@ -229,7 +239,7 @@ func buildResponses(api *wrapper.RequestApi) *spec.Responses {
 				http.StatusOK: {
 					ResponseProps: spec.ResponseProps{
 						Description: "成功",
-						Schema:      createSchemaForType(reflect.TypeOf(api.ResponseObject)),
+						Schema:      createSchemaForType(reflect.TypeOf(api.ResponseObject), 0),
 					},
 				},
 			},
