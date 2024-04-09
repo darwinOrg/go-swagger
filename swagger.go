@@ -40,6 +40,10 @@ func ExportSwaggerFile(req *ExportSwaggerRequest) {
 	saveToFile(swaggerProps, filename)
 }
 
+func CreateSchemaForObject(obj any) *spec.Schema {
+	return createSchemaForType(reflect.TypeOf(obj), 0)
+}
+
 func buildSwaggerProps(req *ExportSwaggerRequest) spec.SwaggerProps {
 	if req.Title == "" {
 		req.Title = "接口文档"
@@ -150,7 +154,7 @@ func buildGetParameters(api *wrapper.RequestApi) []spec.Parameter {
 }
 
 func buildPostParameters(api *wrapper.RequestApi) []spec.Parameter {
-	schema := createSchemaForType(reflect.TypeOf(api.RequestObject), 0)
+	schema := CreateSchemaForObject(api.RequestObject)
 	bodyParam := *spec.BodyParam("body", schema)
 	bodyParam.Required = true
 	return []spec.Parameter{bodyParam}
@@ -259,7 +263,7 @@ func buildResponses(api *wrapper.RequestApi) *spec.Responses {
 				http.StatusOK: {
 					ResponseProps: spec.ResponseProps{
 						Description: "成功",
-						Schema:      createSchemaForType(reflect.TypeOf(api.ResponseObject), 0),
+						Schema:      CreateSchemaForObject(api.ResponseObject),
 					},
 				},
 			},

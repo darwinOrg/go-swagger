@@ -3,6 +3,7 @@ package swagger_test
 import (
 	"github.com/darwinOrg/go-common/page"
 	"github.com/darwinOrg/go-common/result"
+	"github.com/darwinOrg/go-common/utils"
 	"github.com/darwinOrg/go-swagger"
 	"github.com/darwinOrg/go-web/wrapper"
 	"github.com/gin-gonic/gin"
@@ -32,6 +33,11 @@ func TestExportSwaggerFile(t *testing.T) {
 		//Version:     "v0.0.1",
 		RequestApis: wrapper.GetRequestApis(),
 	})
+}
+
+func TestCreateSchemaForObject(t *testing.T) {
+	schema := swagger.CreateSchemaForObject(&UserRequest{})
+	t.Log(utils.MustConvertBeanToJsonString(schema))
 }
 
 type UserRequest struct {
