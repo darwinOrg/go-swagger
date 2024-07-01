@@ -6,7 +6,6 @@ import (
 	dgctx "github.com/darwinOrg/go-common/context"
 	"github.com/darwinOrg/go-common/utils"
 	dghttp "github.com/darwinOrg/go-httpclient"
-	dglogger "github.com/darwinOrg/go-logger"
 	"github.com/darwinOrg/go-web/wrapper"
 	"github.com/google/uuid"
 	"log"
@@ -141,7 +140,6 @@ func SyncSwaggerJsonBytesToApifox(req *SyncToApifoxRequest, swaggerJsonBytes []b
 		if err != nil {
 			panic(err)
 		}
-		dglogger.Debugf(ctx, "detailFoldersRespBytes: %s", string(detailFoldersRespBytes))
 		detailFoldersResp := utils.MustConvertJsonBytesToBean[apifoxResult[[]*apifoxDetailFoldersData]](detailFoldersRespBytes)
 		if !detailFoldersResp.Success {
 			panic("调用apifox获取目录详情列表接口失败")
@@ -171,7 +169,6 @@ func SyncSwaggerJsonBytesToApifox(req *SyncToApifoxRequest, swaggerJsonBytes []b
 				if err != nil {
 					panic(err)
 				}
-				dglogger.Debugf(ctx, "createFolderResp: %s", string(createFolderRespBytes))
 				createFolderRespResp := utils.MustConvertJsonBytesToBean[apifoxResult[apifoxCreateDirData]](createFolderRespBytes)
 				if !createFolderRespResp.Success {
 					panic("调用apifox创建目录接口失败")
