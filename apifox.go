@@ -141,7 +141,7 @@ func SyncSwaggerJsonBytesToApifox(req *SyncToApifoxRequest, swaggerJsonBytes []b
 		if err != nil {
 			panic(err)
 		}
-		dglogger.Infof(ctx, "detailFoldersRespBytes: %s", string(detailFoldersRespBytes))
+		dglogger.Debugf(ctx, "detailFoldersRespBytes: %s", string(detailFoldersRespBytes))
 		detailFoldersResp := utils.MustConvertJsonBytesToBean[apifoxResult[[]*apifoxDetailFoldersData]](detailFoldersRespBytes)
 		if !detailFoldersResp.Success {
 			panic("调用apifox获取目录详情列表接口失败")
@@ -171,7 +171,7 @@ func SyncSwaggerJsonBytesToApifox(req *SyncToApifoxRequest, swaggerJsonBytes []b
 				if err != nil {
 					panic(err)
 				}
-				dglogger.Infof(ctx, "createFolderResp: %s", string(createFolderRespBytes))
+				dglogger.Debugf(ctx, "createFolderResp: %s", string(createFolderRespBytes))
 				createFolderRespResp := utils.MustConvertJsonBytesToBean[apifoxResult[apifoxCreateDirData]](createFolderRespBytes)
 				if !createFolderRespResp.Success {
 					panic("调用apifox创建目录接口失败")
