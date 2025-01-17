@@ -223,7 +223,7 @@ func createSchemaForType(tpe reflect.Type, depth int) *spec.Schema {
 
 			var property *spec.Schema
 
-			// 如果有结构体类型名称和字段名称相同，则不再递归，已免无限递归
+			// 如果有结构体类型名称和字段名称相同，则不再递归，以免无限递归
 			if tpeStr == fieldTypeStr {
 				property = &spec.Schema{}
 
