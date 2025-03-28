@@ -7,7 +7,6 @@ import (
 	"github.com/darwinOrg/go-common/utils"
 	dghttp "github.com/darwinOrg/go-httpclient"
 	"github.com/darwinOrg/go-web/wrapper"
-	"github.com/google/uuid"
 	"log"
 	"os"
 	"strconv"
@@ -129,7 +128,7 @@ func SyncSwaggerJsonBytesToApifox(req *SyncToApifoxRequest, swaggerJsonBytes []b
 		ImportBasePath:      req.ImportBasePath,
 	}
 
-	ctx := &dgctx.DgContext{TraceId: uuid.NewString()}
+	ctx := dgctx.SimpleDgContext()
 	var apiFolderId int64
 
 	if req.ApiFolderPath != "" {

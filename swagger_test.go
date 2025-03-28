@@ -10,6 +10,33 @@ import (
 	"testing"
 )
 
+func TestWrapGinSwagger(t *testing.T) {
+	engine := gin.Default()
+
+	wrapper.Get(&wrapper.RequestHolder[wrapper.MapRequest, *result.Result[*result.Void]]{
+		Remark:       "测试get接口",
+		RouterGroup:  engine.Group("/test"),
+		RelativePath: "/get",
+	})
+
+	wrapper.Post(&wrapper.RequestHolder[UserRequest, *result.Result[*page.PageList[*UserRequest]]]{
+		Remark:       "测试post接口",
+		RouterGroup:  engine.Group("/test"),
+		RelativePath: "post",
+	})
+
+	swagger.WrapGinSwagger(engine, &swagger.ExportSwaggerRequest{
+		ServiceName: "test-service",
+		Title:       "测试服务标题",
+		Description: "测试服务描述",
+		OutDir:      "openapi/v1",
+		Version:     "v0.0.1",
+		RequestApis: wrapper.GetRequestApis(),
+	})
+
+	_ = engine.Run(":8080")
+}
+
 func TestExportSwaggerFile(t *testing.T) {
 	engine := gin.Default()
 

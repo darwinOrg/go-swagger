@@ -3,8 +3,13 @@ package swagger
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/darwinOrg/go-common/utils"
 	"github.com/darwinOrg/go-web/wrapper"
+	"github.com/gin-gonic/gin"
 	"github.com/go-openapi/spec"
+	swaggerFiles "github.com/swaggo/files"
+	ginSwagger "github.com/swaggo/gin-swagger"
+	"github.com/swaggo/swag"
 	"log"
 	"net/http"
 	"os"
@@ -26,10 +31,25 @@ type ExportSwaggerRequest struct {
 	ServiceName string
 }
 
-func ExportSwaggerFile(req *ExportSwaggerRequest) {
+func WrapGinSwagger(e *gin.Engine, req *ExportSwaggerRequest) {
+	swaggerProps := buildSwaggerProps(req)
+	swaggerInfo := &swag.Spec{
+		Version:          req.Version,
+		Title:            req.Title,
+		Description:      req.Description,
+		InfoInstanceName: "swagger",
+		SwaggerTemplate:  utils.MustConvertBeanToJsonString(swaggerProps),
+		LeftDelim:        "{{",
+		RightDelim:       "}}",
+	}
+	swag.Register(swaggerInfo.InstanceName(), swaggerInfo)
+	e.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
+}
+
+func ExportSwaggerFile(req *ExportSwaggerRequest) string {
 	if len(req.RequestApis) == 0 {
 		log.Print("没有需要导出的接口定义")
-		return
+		return ""
 	}
 	if req.ServiceName == "" {
 		panic("服务名不能为空")
@@ -38,6 +58,7 @@ func ExportSwaggerFile(req *ExportSwaggerRequest) {
 	swaggerProps := buildSwaggerProps(req)
 	filename := fmt.Sprintf("%s/%s.swagger.json", req.OutDir, req.ServiceName)
 	saveToFile(swaggerProps, filename)
+	return filename
 }
 
 func CreateSchemaForObject(obj any) *spec.Schema {
