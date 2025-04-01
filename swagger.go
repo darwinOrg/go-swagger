@@ -149,7 +149,7 @@ func buildGetParameters(api *wrapper.RequestApi) []spec.Parameter {
 			p.Type = "string"
 		case reflect.Bool:
 			p.Type = "boolean"
-		case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
+		case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64, reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64:
 			p.Type = "integer"
 		case reflect.Float32, reflect.Float64:
 			p.Type = "number"
@@ -158,7 +158,7 @@ func buildGetParameters(api *wrapper.RequestApi) []spec.Parameter {
 		case reflect.Map:
 			continue
 		default:
-			fmt.Printf("Unsupported field type: %s\n", field.Type.Kind())
+			fmt.Printf("Unsupported field type for get parameters: %s\n", field.Type.Kind())
 		}
 
 		p.Required = extractRequiredFlagFromField(field)
@@ -193,7 +193,7 @@ func createSchemaForType(tpe reflect.Type, depth int) *spec.Schema {
 		schema.Type = []string{"string"}
 	case reflect.Bool:
 		schema.Type = []string{"boolean"}
-	case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
+	case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64, reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64:
 		schema.Type = []string{"integer"}
 	case reflect.Float32, reflect.Float64:
 		schema.Type = []string{"number"}
