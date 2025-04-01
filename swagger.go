@@ -26,14 +26,13 @@ type ExportSwaggerRequest struct {
 	Title       string
 	Description string
 	Version     string
-	RequestApis []*wrapper.RequestApi
 	OutDir      string
-	ServiceName string
+	requestApis []*wrapper.RequestApi
 }
 
 func ExposeGinSwagger(e *gin.Engine) {
 	swaggerProps := buildSwaggerProps(&ExportSwaggerRequest{
-		RequestApis: wrapper.GetRequestApis(),
+		requestApis: wrapper.GetRequestApis(),
 	})
 	swaggerInfo := &swag.Spec{
 		InfoInstanceName: "swagger",
@@ -46,16 +45,14 @@ func ExposeGinSwagger(e *gin.Engine) {
 }
 
 func ExportSwaggerFile(req *ExportSwaggerRequest) string {
-	if len(req.RequestApis) == 0 {
+	req.requestApis = wrapper.GetRequestApis()
+	if len(req.requestApis) == 0 {
 		log.Print("没有需要导出的接口定义")
 		return ""
 	}
-	if req.ServiceName == "" {
-		req.ServiceName = "service"
-	}
 
 	swaggerProps := buildSwaggerProps(req)
-	filename := fmt.Sprintf("%s/%s.swagger.json", req.OutDir, req.ServiceName)
+	filename := fmt.Sprintf("%s/openapi.json", req.OutDir)
 	saveToFile(swaggerProps, filename)
 	return filename
 }
@@ -89,7 +86,7 @@ func buildSwaggerProps(req *ExportSwaggerRequest) spec.SwaggerProps {
 				Version:     req.Version,
 			},
 		},
-		Paths: buildApiPaths(req.RequestApis),
+		Paths: buildApiPaths(req.requestApis),
 	}
 }
 
@@ -206,10 +203,6 @@ func createSchemaForType(tpe reflect.Type, depth int) *spec.Schema {
 		schema.Type = []string{"array"}
 		schema.Items = &spec.SchemaOrArray{Schema: itemSchema}
 	case reflect.Map:
-		keyType := tpe.Key()
-		if keyType.Kind() != reflect.String {
-			panic("Map keys must be strings in OpenAPI schemas.")
-		}
 		valueType := tpe.Elem()
 		valueSchema := createSchemaForType(valueType, depth+1)
 		schema.Type = []string{"object"}
