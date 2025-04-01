@@ -10,7 +10,7 @@ import (
 	"testing"
 )
 
-func TestWrapGinSwagger(t *testing.T) {
+func TestExposeGinSwagger(t *testing.T) {
 	engine := gin.Default()
 
 	wrapper.Get(&wrapper.RequestHolder[wrapper.MapRequest, *result.Result[*result.Void]]{
@@ -25,15 +25,7 @@ func TestWrapGinSwagger(t *testing.T) {
 		RelativePath: "post",
 	})
 
-	swagger.WrapGinSwagger(engine, &swagger.ExportSwaggerRequest{
-		ServiceName: "test-service",
-		Title:       "测试服务标题",
-		Description: "测试服务描述",
-		OutDir:      "openapi/v1",
-		Version:     "v0.0.1",
-		RequestApis: wrapper.GetRequestApis(),
-	})
-
+	swagger.ExposeGinSwagger(engine)
 	_ = engine.Run(":8080")
 }
 

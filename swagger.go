@@ -31,12 +31,11 @@ type ExportSwaggerRequest struct {
 	ServiceName string
 }
 
-func WrapGinSwagger(e *gin.Engine, req *ExportSwaggerRequest) {
-	swaggerProps := buildSwaggerProps(req)
+func ExposeGinSwagger(e *gin.Engine) {
+	swaggerProps := buildSwaggerProps(&ExportSwaggerRequest{
+		RequestApis: wrapper.GetRequestApis(),
+	})
 	swaggerInfo := &swag.Spec{
-		Version:          req.Version,
-		Title:            req.Title,
-		Description:      req.Description,
 		InfoInstanceName: "swagger",
 		SwaggerTemplate:  utils.MustConvertBeanToJsonString(swaggerProps),
 		LeftDelim:        "{{",
@@ -52,7 +51,7 @@ func ExportSwaggerFile(req *ExportSwaggerRequest) string {
 		return ""
 	}
 	if req.ServiceName == "" {
-		panic("服务名不能为空")
+		req.ServiceName = "service"
 	}
 
 	swaggerProps := buildSwaggerProps(req)
