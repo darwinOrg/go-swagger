@@ -85,7 +85,7 @@ func SyncRequestApisToApifox(req *SyncToApifoxRequest, requestApis []*wrapper.Re
 		Title:       req.Title,
 		Description: req.Description,
 		Version:     req.Version,
-		requestApis: requestApis,
+		RequestApis: requestApis,
 	})
 	swaggerJsonBytes, err := json.MarshalIndent(swaggerProps, "", "  ")
 	if err != nil {
