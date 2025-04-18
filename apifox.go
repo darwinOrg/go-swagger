@@ -81,7 +81,7 @@ func SyncRequestApisToApifox(req *SyncToApifoxRequest, requestApis []*wrapper.Re
 		return
 	}
 
-	swaggerProps := buildSwaggerProps(&ExportSwaggerRequest{
+	swaggerProps := BuildSwaggerProps(&ExportSwaggerRequest{
 		Title:       req.Title,
 		Description: req.Description,
 		Version:     req.Version,

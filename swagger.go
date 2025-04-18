@@ -31,7 +31,7 @@ type ExportSwaggerRequest struct {
 }
 
 func ExposeGinSwagger(e *gin.Engine) {
-	swaggerProps := buildSwaggerProps(&ExportSwaggerRequest{
+	swaggerProps := BuildSwaggerProps(&ExportSwaggerRequest{
 		requestApis: wrapper.GetRequestApis(),
 	})
 	swaggerInfo := &swag.Spec{
@@ -51,7 +51,7 @@ func ExportSwaggerFile(req *ExportSwaggerRequest) string {
 		return ""
 	}
 
-	swaggerProps := buildSwaggerProps(req)
+	swaggerProps := BuildSwaggerProps(req)
 	filename := fmt.Sprintf("%s/openapi.json", req.OutDir)
 	saveToFile(swaggerProps, filename)
 	return filename
@@ -61,7 +61,7 @@ func CreateSchemaForObject(obj any) *spec.Schema {
 	return createSchemaForType(reflect.TypeOf(obj), 0)
 }
 
-func buildSwaggerProps(req *ExportSwaggerRequest) spec.SwaggerProps {
+func BuildSwaggerProps(req *ExportSwaggerRequest) spec.SwaggerProps {
 	if req.Title == "" {
 		req.Title = "接口文档"
 	}
