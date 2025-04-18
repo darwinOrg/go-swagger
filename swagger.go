@@ -222,6 +222,7 @@ func createSchemaForType(tpe reflect.Type, depth int) *spec.Schema {
 			Schema: valueSchema,
 		}
 	case reflect.Struct:
+		schema.ID = tpe.Name() + "_Body_"
 		schema.Properties = make(map[string]spec.Schema)
 		schema.Required = make([]string, 0)
 		cnt := tpe.NumField()
