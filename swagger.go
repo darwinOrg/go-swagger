@@ -60,6 +60,9 @@ func ExportSwaggerFile(req *ExportSwaggerRequest) string {
 }
 
 func CreateSchemaForObject(obj any) *spec.Schema {
+	if obj == nil {
+		return nil
+	}
 	return createSchemaForType(reflect.TypeOf(obj), 0)
 }
 
@@ -135,6 +138,9 @@ func buildApiPaths(requestApis []*wrapper.RequestApi) *spec.Paths {
 }
 
 func buildGetParameters(api *wrapper.RequestApi) []spec.Parameter {
+	if api.RequestObject == nil {
+		return []spec.Parameter{}
+	}
 	tpe := reflect.TypeOf(api.RequestObject)
 	for tpe.Kind() == reflect.Pointer {
 		tpe = tpe.Elem()
@@ -173,6 +179,9 @@ func buildGetParameters(api *wrapper.RequestApi) []spec.Parameter {
 }
 
 func buildPostParameters(api *wrapper.RequestApi) []spec.Parameter {
+	if api.RequestObject == nil {
+		return []spec.Parameter{}
+	}
 	schema := CreateSchemaForObject(api.RequestObject)
 	bodyParam := *spec.BodyParam("body", schema)
 	bodyParam.Required = true
