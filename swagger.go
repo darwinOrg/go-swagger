@@ -310,12 +310,7 @@ func extractNameFromField(field reflect.StructField) string {
 }
 
 func extractTitleFromField(field reflect.StructField) string {
-	title := field.Tag.Get("title")
-	if title != "" {
-		return title
-	} else {
-		return extractDescriptionFromField(field)
-	}
+	return field.Tag.Get("title")
 }
 
 func extractRequiredFlagFromField(field reflect.StructField) bool {
