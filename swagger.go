@@ -141,29 +141,35 @@ func buildApiPaths(requestApis []*wrapper.RequestApi) *spec.Paths {
 }
 
 func buildGetParameters(tpe reflect.Type) []spec.Parameter {
+	var parameters []spec.Parameter
+
 	for tpe.Kind() == reflect.Pointer {
 		tpe = tpe.Elem()
 	}
-	cnt := tpe.NumField()
-	var parameters []spec.Parameter
+	if tpe.Kind() != reflect.Struct {
+		return parameters
+	}
 
+	cnt := tpe.NumField()
 	for i := 0; i < cnt; i++ {
 		field := tpe.Field(i)
-
 		ftpe := field.Type
-		for ftpe.Kind() == reflect.Pointer {
-			ftpe = ftpe.Elem()
-		}
 
 		if field.Anonymous {
 			params := buildGetParameters(ftpe)
+
 			if len(params) > 0 {
 				parameters = append(parameters, params...)
 			}
+
 			continue
 		}
 
 		p := *spec.QueryParam(extractNameFromField(field))
+
+		for ftpe.Kind() == reflect.Pointer {
+			ftpe = ftpe.Elem()
+		}
 
 		switch ftpe.Kind() {
 		case reflect.String:
@@ -184,6 +190,7 @@ func buildGetParameters(tpe reflect.Type) []spec.Parameter {
 
 		p.Required = extractRequiredFlagFromField(field)
 		p.Description = extractDescriptionFromField(field)
+		p.Required = extractRequiredFlagFromField(field)
 
 		parameters = append(parameters, p)
 	}
@@ -268,8 +275,8 @@ func createSchemaForType(tpe reflect.Type, depth int) *spec.Schema {
 			}
 
 			if strings.Contains(tpe.String(), "result.Result") && field.Name == "Data" {
-				rt := reflect.New(tpe).Elem().Interface()
-				dataType := reflect.ValueOf(rt).Field(i).Type()
+				obj := reflect.New(tpe).Elem().Interface()
+				dataType := reflect.ValueOf(obj).Field(i).Type()
 				for dataType.Kind() == reflect.Pointer {
 					dataType = dataType.Elem()
 				}

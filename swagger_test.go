@@ -12,7 +12,7 @@ import (
 func TestExposeGinSwagger(t *testing.T) {
 	engine := gin.Default()
 
-	wrapper.Get(&wrapper.RequestHolder[wrapper.MapRequest, *result.Result[*result.Void]]{
+	wrapper.Get(&wrapper.RequestHolder[UserRequest, *result.Result[*result.Void]]{
 		Remark:       "测试get接口",
 		RouterGroup:  engine.Group("/test"),
 		RelativePath: "/get",
@@ -31,7 +31,7 @@ func TestExposeGinSwagger(t *testing.T) {
 func TestExportSwaggerFile(t *testing.T) {
 	engine := gin.Default()
 
-	wrapper.Get(&wrapper.RequestHolder[wrapper.MapRequest, *result.Result[*result.Void]]{
+	wrapper.Get(&wrapper.RequestHolder[UserRequest, *result.Result[*result.Void]]{
 		Remark:       "测试get接口",
 		RouterGroup:  engine.Group("/test"),
 		RelativePath: "/get",
