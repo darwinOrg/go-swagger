@@ -103,10 +103,13 @@ func buildApiPaths(requestApis []*wrapper.RequestApi) *spec.Paths {
 		url = strings.ReplaceAll(url, "//", "/")
 
 		var parameters []spec.Parameter
-		if api.Method == http.MethodGet {
-			parameters = buildGetParameters(api)
-		} else {
-			parameters = buildPostParameters(api)
+		if api.RequestObject != nil {
+			tpe := reflect.TypeOf(api.RequestObject)
+			if api.Method == http.MethodGet {
+				parameters = buildGetParameters(tpe)
+			} else {
+				parameters = buildPostParameters(tpe)
+			}
 		}
 
 		operation := &spec.Operation{
@@ -137,11 +140,7 @@ func buildApiPaths(requestApis []*wrapper.RequestApi) *spec.Paths {
 	}
 }
 
-func buildGetParameters(api *wrapper.RequestApi) []spec.Parameter {
-	if api.RequestObject == nil {
-		return []spec.Parameter{}
-	}
-	tpe := reflect.TypeOf(api.RequestObject)
+func buildGetParameters(tpe reflect.Type) []spec.Parameter {
 	for tpe.Kind() == reflect.Pointer {
 		tpe = tpe.Elem()
 	}
@@ -150,9 +149,23 @@ func buildGetParameters(api *wrapper.RequestApi) []spec.Parameter {
 
 	for i := 0; i < cnt; i++ {
 		field := tpe.Field(i)
+
+		ftpe := field.Type
+		for ftpe.Kind() == reflect.Pointer {
+			ftpe = ftpe.Elem()
+		}
+
+		if field.Anonymous {
+			params := buildGetParameters(ftpe)
+			if len(params) > 0 {
+				parameters = append(parameters, params...)
+			}
+			continue
+		}
+
 		p := *spec.QueryParam(extractNameFromField(field))
 
-		switch field.Type.Kind() {
+		switch ftpe.Kind() {
 		case reflect.String:
 			p.Type = "string"
 		case reflect.Bool:
@@ -178,11 +191,8 @@ func buildGetParameters(api *wrapper.RequestApi) []spec.Parameter {
 	return parameters
 }
 
-func buildPostParameters(api *wrapper.RequestApi) []spec.Parameter {
-	if api.RequestObject == nil {
-		return []spec.Parameter{}
-	}
-	schema := CreateSchemaForObject(api.RequestObject)
+func buildPostParameters(tpe reflect.Type) []spec.Parameter {
+	schema := createSchemaForType(tpe, 0)
 	bodyParam := *spec.BodyParam("body", schema)
 	bodyParam.Required = true
 	return []spec.Parameter{bodyParam}
@@ -229,6 +239,33 @@ func createSchemaForType(tpe reflect.Type, depth int) *spec.Schema {
 
 		for i := 0; i < cnt; i++ {
 			field := tpe.Field(i)
+
+			if field.Anonymous {
+				ftpe := field.Type
+
+				for ftpe.Kind() == reflect.Pointer {
+					ftpe = ftpe.Elem()
+				}
+
+				if ftpe.Kind() != reflect.Struct {
+					continue
+				}
+
+				fcnt := ftpe.NumField()
+				for j := 0; j < fcnt; j++ {
+					embedField := ftpe.Field(j)
+					property := createSchemaForType(embedField.Type, depth+1)
+					property.Title = extractTitleFromField(embedField)
+					property.Description = extractDescriptionFromField(embedField)
+					fieldName := extractNameFromField(embedField)
+					schema.Properties[fieldName] = *property
+					if extractRequiredFlagFromField(embedField) {
+						schema.Required = append(schema.Required, fieldName)
+					}
+				}
+
+				continue
+			}
 
 			if strings.Contains(tpe.String(), "result.Result") && field.Name == "Data" {
 				rt := reflect.New(tpe).Elem().Interface()

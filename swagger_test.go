@@ -3,7 +3,6 @@ package swagger_test
 import (
 	"github.com/darwinOrg/go-common/page"
 	"github.com/darwinOrg/go-common/result"
-	"github.com/darwinOrg/go-common/utils"
 	"github.com/darwinOrg/go-swagger"
 	"github.com/darwinOrg/go-web/wrapper"
 	"github.com/gin-gonic/gin"
@@ -52,15 +51,10 @@ func TestExportSwaggerFile(t *testing.T) {
 	})
 }
 
-func TestCreateSchemaForObject(t *testing.T) {
-	schema := swagger.CreateSchemaForObject(&UserRequest{})
-	t.Log(utils.MustConvertBeanToJsonString(schema))
-}
-
 type UserRequest struct {
-	Name     string    `binding:"required" errMsg:"姓名错误:不能为空" title:"名称" remark:"名称"`
-	Age      int       `binding:"required,gt=0,lt=100" title:"年龄" remark:"年龄"`
-	UserInfo *userInfo `binding:"required"`
+	Name string `binding:"required" errMsg:"姓名错误:不能为空" title:"名称" remark:"名称"`
+	Age  int    `binding:"required,gt=0,lt=100" title:"年龄" remark:"年龄"`
+	*userInfo
 }
 
 type userInfo struct {
