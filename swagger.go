@@ -105,7 +105,7 @@ func buildApiPaths(requestApis []*wrapper.RequestApi) *spec.Paths {
 		var parameters []spec.Parameter
 		if api.RequestObject != nil {
 			tpe := reflect.TypeOf(api.RequestObject)
-			if api.Method == http.MethodGet {
+			if strings.EqualFold(api.Method, http.MethodGet) {
 				parameters = buildGetParameters(tpe)
 			} else {
 				parameters = buildPostParameters(tpe)
@@ -124,7 +124,7 @@ func buildApiPaths(requestApis []*wrapper.RequestApi) *spec.Paths {
 		}
 
 		itemProps := spec.PathItemProps{}
-		if api.Method == http.MethodGet {
+		if strings.EqualFold(api.Method, http.MethodGet) {
 			itemProps.Get = operation
 		} else {
 			itemProps.Post = operation
