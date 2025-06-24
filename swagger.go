@@ -11,6 +11,7 @@ import (
 	ginSwagger "github.com/swaggo/gin-swagger"
 	"github.com/swaggo/swag"
 	"log"
+	"maps"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -188,7 +189,6 @@ func buildGetParameters(tpe reflect.Type) []spec.Parameter {
 			fmt.Printf("Unsupported field type for get parameters: %s\n", field.Type.Kind())
 		}
 
-		p.Required = extractRequiredFlagFromField(field)
 		p.Description = extractDescriptionFromField(field)
 		p.Required = extractRequiredFlagFromField(field)
 
@@ -258,17 +258,11 @@ func createSchemaForType(tpe reflect.Type, depth int) *spec.Schema {
 					continue
 				}
 
-				fcnt := ftpe.NumField()
-				for j := 0; j < fcnt; j++ {
-					embedField := ftpe.Field(j)
-					property := createSchemaForType(embedField.Type, depth+1)
-					property.Title = extractTitleFromField(embedField)
-					property.Description = extractDescriptionFromField(embedField)
-					fieldName := extractNameFromField(embedField)
-					schema.Properties[fieldName] = *property
-					if extractRequiredFlagFromField(embedField) {
-						schema.Required = append(schema.Required, fieldName)
-					}
+				embedSchema := createSchemaForType(ftpe, depth+1)
+				maps.Copy(schema.Properties, embedSchema.Properties)
+
+				if len(embedSchema.Required) > 0 {
+					schema.Required = append(schema.Required, embedSchema.Required...)
 				}
 
 				continue
