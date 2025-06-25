@@ -5,6 +5,7 @@ import (
 	"fmt"
 	dgctx "github.com/darwinOrg/go-common/context"
 	"github.com/darwinOrg/go-common/utils"
+	dgcfg "github.com/darwinOrg/go-config"
 	dghttp "github.com/darwinOrg/go-httpclient"
 	"github.com/darwinOrg/go-web/wrapper"
 	"log"
@@ -93,6 +94,17 @@ func SyncRequestApisToApifox(req *SyncToApifoxRequest, requestApis []*wrapper.Re
 	}
 
 	SyncSwaggerJsonBytesToApifox(req, swaggerJsonBytes)
+}
+
+func SyncRequestApisToApifoxDefault(apifoxFolder string) {
+	dgcfg.LoadDotEnv(dgcfg.MustConfRoot())
+	SyncRequestApisToApifox(&SyncToApifoxRequest{
+		ProjectId:           os.Getenv("APIFOX_PROJECT_ID"),
+		AccessToken:         os.Getenv("APIFOX_ACCESS_TOKEN"),
+		ApiOverwriteMode:    ApiOverwriteModeMethodAndPath,
+		SchemaOverwriteMode: SchemaOverwriteModeBoth,
+		ApiFolderPath:       apifoxFolder,
+	}, wrapper.GetRequestApis())
 }
 
 func SyncSwaggerJsonFileToApifox(req *SyncToApifoxRequest, swaggerJsonFile string) {
