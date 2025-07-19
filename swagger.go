@@ -268,23 +268,14 @@ func createSchemaForType(tpe reflect.Type, depth int) *spec.Schema {
 				continue
 			}
 
-			if strings.Contains(tpe.String(), "result.Result") && field.Name == "Data" {
-				obj := reflect.New(tpe).Elem().Interface()
-				dataType := reflect.ValueOf(obj).Field(i).Type()
-				for dataType.Kind() == reflect.Pointer {
-					dataType = dataType.Elem()
-				}
-				field.Type = dataType
-			}
-
-			tpeStr := tpe.String()
-			tpeStr = strings.TrimPrefix(tpeStr, "*")
-
 			fieldTypeStr := field.Type.String()
 			fieldTypeStr = strings.TrimPrefix(fieldTypeStr, "[]")
 			fieldTypeStr = strings.TrimPrefix(fieldTypeStr, "*")
 
 			var property *spec.Schema
+
+			tpeStr := tpe.String()
+			tpeStr = strings.TrimPrefix(tpeStr, "*")
 
 			// 如果有结构体类型名称和字段名称相同，则不再递归，以免无限递归
 			if tpeStr == fieldTypeStr {
@@ -337,7 +328,11 @@ func buildResponses(api *wrapper.RequestApi) *spec.Responses {
 func extractNameFromField(field reflect.StructField) string {
 	jsonTag := field.Tag.Get("json")
 	if jsonTag != "" && jsonTag != "-" {
-		return strings.ReplaceAll(jsonTag, ",omitempty", "")
+		if strings.Contains(jsonTag, ",") {
+			return jsonTag[:strings.Index(jsonTag, ",")]
+		} else {
+			return jsonTag
+		}
 	} else {
 		if len(field.Name) == 1 {
 			return strings.ToLower(field.Name)
