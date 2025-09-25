@@ -3,15 +3,16 @@ package swagger
 import (
 	"encoding/json"
 	"fmt"
+	"log"
+	"os"
+	"strconv"
+	"strings"
+
 	dgctx "github.com/darwinOrg/go-common/context"
 	"github.com/darwinOrg/go-common/utils"
 	dgcfg "github.com/darwinOrg/go-config"
 	dghttp "github.com/darwinOrg/go-httpclient"
 	"github.com/darwinOrg/go-web/wrapper"
-	"log"
-	"os"
-	"strconv"
-	"strings"
 )
 
 const (

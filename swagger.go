@@ -3,13 +3,6 @@ package swagger
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/darwinOrg/go-common/utils"
-	"github.com/darwinOrg/go-web/wrapper"
-	"github.com/gin-gonic/gin"
-	"github.com/go-openapi/spec"
-	swaggerFiles "github.com/swaggo/files"
-	ginSwagger "github.com/swaggo/gin-swagger"
-	"github.com/swaggo/swag"
 	"log"
 	"maps"
 	"net/http"
@@ -17,6 +10,14 @@ import (
 	"path/filepath"
 	"reflect"
 	"strings"
+
+	"github.com/darwinOrg/go-common/utils"
+	"github.com/darwinOrg/go-web/wrapper"
+	"github.com/gin-gonic/gin"
+	"github.com/go-openapi/spec"
+	swaggerFiles "github.com/swaggo/files"
+	ginSwagger "github.com/swaggo/gin-swagger"
+	"github.com/swaggo/swag"
 )
 
 const (
@@ -259,10 +260,12 @@ func createSchemaForType(tpe reflect.Type, depth int) *spec.Schema {
 				}
 
 				embedSchema := createSchemaForType(ftpe, depth+1)
-				maps.Copy(schema.Properties, embedSchema.Properties)
+				if embedSchema != nil {
+					maps.Copy(schema.Properties, embedSchema.Properties)
 
-				if len(embedSchema.Required) > 0 {
-					schema.Required = append(schema.Required, embedSchema.Required...)
+					if len(embedSchema.Required) > 0 {
+						schema.Required = append(schema.Required, embedSchema.Required...)
+					}
 				}
 
 				continue

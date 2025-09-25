@@ -1,13 +1,14 @@
 package swagger_test
 
 import (
+	"os"
+	"testing"
+
 	"github.com/darwinOrg/go-common/page"
 	"github.com/darwinOrg/go-common/result"
 	"github.com/darwinOrg/go-swagger"
 	"github.com/darwinOrg/go-web/wrapper"
 	"github.com/gin-gonic/gin"
-	"os"
-	"testing"
 )
 
 type TagVo struct {

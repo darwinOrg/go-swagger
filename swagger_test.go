@@ -1,12 +1,13 @@
 package swagger_test
 
 import (
+	"testing"
+
 	"github.com/darwinOrg/go-common/page"
 	"github.com/darwinOrg/go-common/result"
 	"github.com/darwinOrg/go-swagger"
 	"github.com/darwinOrg/go-web/wrapper"
 	"github.com/gin-gonic/gin"
-	"testing"
 )
 
 func TestExposeGinSwagger(t *testing.T) {
