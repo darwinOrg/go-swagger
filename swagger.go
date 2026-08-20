@@ -34,7 +34,7 @@ type ExportSwaggerRequest struct {
 
 func ExposeGinSwagger(e *gin.Engine) {
 	swaggerProps := BuildSwaggerProps(&ExportSwaggerRequest{
-		RequestApis: wrapper.GetRequestApis(),
+		RequestApis: wrapper.RequestApis,
 	})
 	swaggerInfo := &swag.Spec{
 		InfoInstanceName: "swagger",
@@ -48,7 +48,7 @@ func ExposeGinSwagger(e *gin.Engine) {
 
 func ExportSwaggerFile(req *ExportSwaggerRequest) string {
 	if len(req.RequestApis) == 0 {
-		req.RequestApis = wrapper.GetRequestApis()
+		req.RequestApis = wrapper.RequestApis
 	}
 	if len(req.RequestApis) == 0 {
 		log.Print("没有需要导出的接口定义")
@@ -369,7 +369,7 @@ func saveToFile(swaggerProps spec.SwaggerProps, filename string) {
 		panic(err)
 	}
 
-	_, err = os.Create(filename)
+	file, err := os.Create(filename)
 	if err != nil {
 		panic(err)
 	}
@@ -378,4 +378,6 @@ func saveToFile(swaggerProps spec.SwaggerProps, filename string) {
 	if err != nil {
 		panic(err)
 	}
+
+	_ = file.Close()
 }
