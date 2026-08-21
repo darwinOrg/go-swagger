@@ -105,7 +105,7 @@ func SyncRequestApisToApifoxDefault(apifoxFolder string) {
 		ApiOverwriteMode:    ApiOverwriteModeMethodAndPath,
 		SchemaOverwriteMode: SchemaOverwriteModeBoth,
 		ApiFolderPath:       apifoxFolder,
-	}, wrapper.GetRequestApis())
+	}, wrapper.RequestApis)
 }
 
 func SyncSwaggerJsonFileToApifox(req *SyncToApifoxRequest, swaggerJsonFile string) {
